@@ -19,3 +19,5 @@ References
 ----------
 
 [IPM-FD] Wei Cheng, Claude Carlet, Kouassi Goli, Jean-Luc Danger, and Sylvain Guilley. Detecting Faults, in Inner-Product Masking Scheme - IPM-FD: IPM with Fault Detection. In 8th International Workshop on Security Proofs for Embedded Systems Atlanta, USA, August 24, 2019.
+
+[AES_Coron_Github] Jean-Sébastien Coron. Higher Order Countermeasures for AES and DES. December 2017. https://github.com/coron/htable/
