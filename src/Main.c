@@ -82,7 +82,7 @@ int main()
 		// //----------------------------------
 
 		//----------------------------------
-		int dt, status = -1, nTimes = 100, base = 0;
+		int dt, status = -1, nTimes = 1000, base = 0;
 		printf("Without countermeasure:\n");
 		dt = run_aes(in, out, key, nTimes);
 		base = dt;
