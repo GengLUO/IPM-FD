@@ -51,7 +51,7 @@ byte sq[256] = {
 //IPM settings : constant public valuesTODO:important
 byte **L;       // The orthogonal of n^2 matrix H
 byte **L_prime; // orthogonal of H with the (k - 1) 0s removed (n - k +1)^2
-byte ***L_hat;  //L_prime*L_prime see algo IPM_Mult for details
+byte **L_prime_inv; //Inverse of L_prime, used for IPM_MULT
 
 //number of random numbers generated
 static unsigned int randcount = 0;
@@ -172,13 +172,16 @@ byte **IPM_FD_Setup(int n, int k)
     }
     int N = n - k + 1;
     L_prime = allocate2D(k, N);
+    L_prime_inv = allocate2D(k, N);
 
     for (j = 0; j < k; j++)
     {
         L_prime[j][0] = 1;
+        L_prime_inv[j][0] = 1;
         for (i = 1; i < N; i++)
         {
             L_prime[j][i] = L[j][i + k - 1];
+            L_prime_inv[j][i] = GF256_Inverse(L[j][i + k - 1]);
         }
     }
 
@@ -198,20 +201,6 @@ byte **IPM_FD_Setup(int n, int k)
         printf("\n");
     }
     printf("\n");
-
-    L_hat = allocate3D(k, N, N); //tensor product L' x L'
-    int p;
-    for (p = 0; p < k; p++)
-    {
-        for (i = 0; i < N; i++)
-        {
-            for (j = 0; j < N; j++)
-            {
-                L_hat[p][i][j] = GF256_Mult(L_prime[p][i], L_prime[p][j]);
-                printf("L_hat[k=%d, i=%d, j=%d] = %d  <= %d * %d\n",p,i,j,L_hat[p][i][j], L_prime[p][i], L_prime[p][j]);
-            }
-        }
-    }
 
     return L;
 }
@@ -402,7 +391,7 @@ void IPM_Mult(byte *P, const byte *Z, const byte *Z_prime, int N, int k, int pos
             else if (i > j){
                 U_prime[i][j] = U_prime[j][i];
             }
-            U[i][j] = GF256_Mult(U_prime[i][j], GF256_Inverse(L_prime[position][i]));
+            U[i][j] = GF256_Mult(U_prime[i][j], L_prime_inv[position][i]);
         }
     }
 //------~n^2/2 loop------
@@ -742,10 +731,9 @@ void deallocate2D(byte **arr2D, int rows, int cols)
 
 void freeMemory(int n, int k)
 {
-    int N = n - k + 1;
     deallocate2D(L, k, n);
     deallocate2D(L_prime, k, n);
-    deallocate3D(L_hat, k, N, N);
+    deallocate2D(L_prime_inv, k, n);
 }
 void print(const byte *a, const char *msg, int n)
 {
