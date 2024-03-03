@@ -201,6 +201,14 @@ byte **IPM_FD_Setup(int n, int k)
         printf("\n");
     }
     printf("\n");
+    printf("L'inv:\n");
+    for (i = 0; i<k; i++){
+        for (j = 0; j < N; j++){
+            printf("%d,",L_prime_inv[i][j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
 
     return L;
 }
@@ -361,53 +369,83 @@ void IPConstMult(byte *res, const byte *x, byte c, int n)
 
 void IPM_Mult(byte *P, const byte *Z, const byte *Z_prime, int N, int k, int position)
 {
-    byte T[N][N], U[N][N], V[N][N], U_prime[N][N];
+//    byte T[N][N], U[N][N], V[N][N], U_prime[N][N];
+    byte T, U, U_prime[N][N];
+    byte R[N];
+    memset(R,0,N);
     int i, j;
 
     // Computation of the matrix T
     for (i = 0; i < N; i++) {
         for (j = 0; j < N; j++) {
-            T[i][j] = GF256_Mult(GF256_Mult(Z[i], Z_prime[j]) , L_prime[position][j]);
-        }
-    }
-//------n^2 loop------
-    // Computation of the matrices U' and U
-//    for (i = 0; i < N; i++) {
-//        U[i][i] = 0;
-//        for (j = 0; j < N; j++) {
-//            if (i < j){
-//                byte random = random_byte();
-//                U[i][j] = GF256_Mult(random, GF256_Inverse(L_prime[position][i]));
-//                U[j][i] = GF256_Mult(random, GF256_Inverse(L_prime[position][j]));
+            //1. Compute T
+//            T[i][j] = GF256_Mult(GF256_Mult(Z[i], Z_prime[j]) , L_prime[position][j]);
+            T = GF256_Mult(GF256_Mult(Z[i], Z_prime[j]) , L_prime[position][j]);
+
+            //Compute U
+//            if (i == j) U_prime[i][i] = 0;
+//            else if (i < j){
+//                U_prime[i][j] = random_byte();
 //            }
-//        }
-//    }
-    for (i = 0; i < N; i++) {
-        U_prime[i][i] = 0;
-        for (j = 0; j < N; j++) {
-            if (i < j){
+//            else if (i > j){
+//                U_prime[i][j] = U_prime[j][i];
+//            }
+//            U[i][j] = GF256_Mult(U_prime[i][j], L_prime_inv[position][i]);
+            if (i == j) U_prime[i][i] = 0;
+            else if (i < j){
                 U_prime[i][j] = random_byte();
             }
             else if (i > j){
                 U_prime[i][j] = U_prime[j][i];
             }
-            U[i][j] = GF256_Mult(U_prime[i][j], L_prime_inv[position][i]);
+            U = GF256_Mult(U_prime[i][j], L_prime_inv[position][i]);
+
+            //Compute final result
+            R[i] ^= T ^ U;
         }
-    }
-//------~n^2/2 loop------
-    // Computation of the matrix V
-    for (i = 0; i < N; i++) {
-        for (j = 0; j < N; j++) {
-            V[i][j] = T[i][j] ^ U[i][j];
-        }
+        memcpy(P,R,N);
     }
 //------n^2 loop------
-    for (i = 0; i < N; i++) {
-        P[i] = 0;
-        for (j = 0; j < N; j++) {
-            P[i] ^= V[i][j];
-        }
-    }
+    // Computation of the matrices U' and U
+//    for (i = 0; i < N; i++) {
+////        U[i][i] = 0;
+//        for (j = 0; j < N; j++) {
+//            if (i ==j ) U[i][i] = 0;
+//            else if (i < j) {
+//                byte random = random_byte();
+//                U[i][j] = GF256_Mult(random, L_prime_inv[position][i]);
+//                U[j][i] = GF256_Mult(random, L_prime_inv[position][j]);
+//            }
+//        }
+//    }
+
+//    for (i = 0; i < N; i++) {
+//        for (j = 0; j < N; j++) {
+//            if (i == j) U_prime[i][i] = 0;
+//            else if (i < j){
+//                U_prime[i][j] = random_byte();
+//            }
+//            else if (i > j){
+//                U_prime[i][j] = U_prime[j][i];
+//            }
+//            U[i][j] = GF256_Mult(U_prime[i][j], L_prime_inv[position][i]);
+//        }
+//    }
+////------~n^2/2 loop------
+//    // Computation of the matrix V
+//    for (i = 0; i < N; i++) {
+//        for (j = 0; j < N; j++) {
+//            V[i][j] = T[i][j] ^ U[i][j];
+//        }
+//    }
+////------n^2 loop------
+//    for (i = 0; i < N; i++) {
+//        for (j = 0; j < N; j++) {
+//            R[i] ^= V[i][j];
+//        }
+//    }
+
+//    memcpy(P,R,N);
 //------n^2 loop------
 //----------------2*n^2 loops for multiplication, 2*n^2--------------------
 //1. actually, better balance between the time and area
