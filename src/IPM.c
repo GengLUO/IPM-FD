@@ -370,41 +370,84 @@ void IPConstMult(byte *res, const byte *x, byte c, int n)
 void IPM_Mult(byte *P, const byte *Z, const byte *Z_prime, int N, int k, int position)
 {
 //    byte T[N][N], U[N][N], V[N][N], U_prime[N][N];
-    byte T, U, U_prime[N][N];
+    printf("Z:\n");
+    for (int i = 0; i < N; i++) {
+        printf("%2x",Z[i]);
+    }
+    printf("\n");
+    printf("Z':\n");
+    for (int i = 0; i < N; i++) {
+        printf("%2x",Z_prime[i]);
+    }
+    printf("\n");
+
+    byte T, U, U_prime;
+    byte next;
     byte R[N];
     memset(R,0,N);
+    byte random[4][4];
+    random[0][0] = 43;
+    random[0][1] = 65;
+    random[0][2] = 63;
+    random[0][3] = 97;
+
+    random[1][0] = 123;
+    random[1][1] = 1;
+    random[1][2] = 239;
+    random[1][3] = 54;
+
+    random[2][0] = 78;
+    random[2][1] = 76;
+    random[2][2] = 127;
+    random[2][3] = 179;
+
+    random[3][0] = 222;
+    random[3][1] = 48;
+    random[3][2] = 74;
+    random[3][3] = 59;
     int i, j;
+    int index_i, index_j;
 
     // Computation of the matrix T
     for (i = 0; i < N; i++) {
-        for (j = 0; j < N; j++) {
+        for (j = i; j < N; (next)?j++:j) {
+
             //1. Compute T
-//            T[i][j] = GF256_Mult(GF256_Mult(Z[i], Z_prime[j]) , L_prime[position][j]);
-            T = GF256_Mult(GF256_Mult(Z[i], Z_prime[j]) , L_prime[position][j]);
+            if (i == j){
+                U_prime = 0;
+                next = 1;
 
-            //Compute U
-//            if (i == j) U_prime[i][i] = 0;
-//            else if (i < j){
-//                U_prime[i][j] = random_byte();
-//            }
-//            else if (i > j){
-//                U_prime[i][j] = U_prime[j][i];
-//            }
-//            U[i][j] = GF256_Mult(U_prime[i][j], L_prime_inv[position][i]);
-            if (i == j) U_prime[i][i] = 0;
-            else if (i < j){
-                U_prime[i][j] = random_byte();
+                index_i = i;
+                index_j = j;
             }
-            else if (i > j){
-                U_prime[i][j] = U_prime[j][i];
-            }
-            U = GF256_Mult(U_prime[i][j], L_prime_inv[position][i]);
+            else {
+                if (next) {
+//                    U_prime = random[i][j];
+                    U_prime = random_byte();
+                    next = 0;
 
-            //Compute final result
-            R[i] ^= T ^ U;
+                    index_i = i;
+                    index_j = j;
+                } else
+                {
+                    next = 1;
+
+                    index_i = j;
+                    index_j = i;
+                }
+            }
+            T = GF256_Mult(GF256_Mult(Z[index_i], Z_prime[index_j]) , L_prime[position][index_j]);
+            U = GF256_Mult(U_prime, L_prime_inv[position][index_i]);
+            R[index_i] ^= T ^ U;
         }
-        memcpy(P,R,N);
+
     }
+    memcpy(P,R,N);
+    printf("P':\n");
+    for (int i = 0; i < N; i++) {
+        printf("%2x",P[i]);
+    }
+    printf("\n");
 //------n^2 loop------
     // Computation of the matrices U' and U
 //    for (i = 0; i < N; i++) {
