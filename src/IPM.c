@@ -52,6 +52,10 @@ byte sq[256] = {
 byte **L;       // The orthogonal of n^2 matrix H
 byte **L_prime; // orthogonal of H with the (k - 1) 0s removed (n - k +1)^2
 byte **L_prime_inv; //Inverse of L_prime, used for IPM_MULT
+byte L_prime_test_homo [2][4]= {
+        {1, 19, 205, 142},
+        {1,83,65,68}
+};
 
 //number of random numbers generated
 static unsigned int randcount = 0;
@@ -157,6 +161,20 @@ byte **IPM_FD_Setup(int n, int k)
         L[1][1] = 1;
         L[1][2] = 239;
         L[1][3] = 128;
+    }
+    else if (n==5 && k == 2) //TODO: DELETE IT
+    {
+        L[0][0] = 1;
+        L[0][1] = 0;
+        L[0][2] = 43;
+        L[0][3] = 122;
+        L[0][4] = 199;
+
+        L[1][0] = 0;
+        L[1][1] = 1;
+        L[1][2] = 27;
+        L[1][3] = 250;
+        L[1][4] = 188;
     }
     else
     {
@@ -271,9 +289,12 @@ byte GF256_Mult(byte a, byte b)
 void IPM_Square(byte *x2, const byte *x, int N, int position)
 {
     int i;
-    for (i = 1; i < N; i++)
+    for (i = 1; i < N; i++) {
         x2[i] = GF256_Mult(GF256_Square(x[i]), L_prime[position][i]);
+//        printf("%2x,",GF256_Square(x[i]));
+    }
     x2[0] = GF256_Square(x[0]); //L_prime[position][0] = 1
+    printf("\nEnd square\n");
 }
 
 //squaring of IPM_FD share, more efficient than Mult(x,x)
@@ -338,9 +359,22 @@ void IPM_FD_Mult(byte *R, const byte *Z, const byte *Z_prime, int n, int k)
     for (j = 0; j < k; j++)
         IPM_Mult(P[j], Z__[j], Z_prime__[j], N, k, j);
     printf("multcount = %d\n",multcount);
+    for(int index = 0; index < k; index ++) {
+        printf("P[%d]:\n", index);
+        for (i = 0; i < N; i++) {
+            printf("%2x", P[index][i]);
+        }
+        printf("\n");
+    }
     for (j = 1; j < k; j++)
         P[j][0] = IPM_Homogenize(P[0], P[j], N, k, j);
-
+    for(int index = 0; index < k; index ++) {
+        printf("P[%d]:\n", index);
+        for (i = 0; i < N; i++) {
+            printf("%2x", P[index][i]);
+        }
+        printf("\n");
+    }
     //return
     for (j = 0; j < k; j++)
         R[j] = P[j][0];
@@ -422,8 +456,8 @@ void IPM_Mult(byte *P, const byte *Z, const byte *Z_prime, int N, int k, int pos
             }
             else {
                 if (next) {
-//                    U_prime = random[i][j];
-                    U_prime = random_byte();
+                    U_prime = random[i][j];
+//                    U_prime = random_byte();
                     next = 0;
 
                     index_i = i;
@@ -443,59 +477,11 @@ void IPM_Mult(byte *P, const byte *Z, const byte *Z_prime, int N, int k, int pos
 
     }
     memcpy(P,R,N);
-    printf("P':\n");
-    for (int i = 0; i < N; i++) {
-        printf("%2x",P[i]);
-    }
-    printf("\n");
-//------n^2 loop------
-    // Computation of the matrices U' and U
-//    for (i = 0; i < N; i++) {
-////        U[i][i] = 0;
-//        for (j = 0; j < N; j++) {
-//            if (i ==j ) U[i][i] = 0;
-//            else if (i < j) {
-//                byte random = random_byte();
-//                U[i][j] = GF256_Mult(random, L_prime_inv[position][i]);
-//                U[j][i] = GF256_Mult(random, L_prime_inv[position][j]);
-//            }
-//        }
+//    printf("P':\n");
+//    for (int i = 0; i < N; i++) {
+//        printf("%2x",P[i]);
 //    }
-
-//    for (i = 0; i < N; i++) {
-//        for (j = 0; j < N; j++) {
-//            if (i == j) U_prime[i][i] = 0;
-//            else if (i < j){
-//                U_prime[i][j] = random_byte();
-//            }
-//            else if (i > j){
-//                U_prime[i][j] = U_prime[j][i];
-//            }
-//            U[i][j] = GF256_Mult(U_prime[i][j], L_prime_inv[position][i]);
-//        }
-//    }
-////------~n^2/2 loop------
-//    // Computation of the matrix V
-//    for (i = 0; i < N; i++) {
-//        for (j = 0; j < N; j++) {
-//            V[i][j] = T[i][j] ^ U[i][j];
-//        }
-//    }
-////------n^2 loop------
-//    for (i = 0; i < N; i++) {
-//        for (j = 0; j < N; j++) {
-//            R[i] ^= V[i][j];
-//        }
-//    }
-
-//    memcpy(P,R,N);
-//------n^2 loop------
-//----------------2*n^2 loops for multiplication, 2*n^2--------------------
-//1. actually, better balance between the time and area
-//2. easier for hardware acceleration
-    //2.1 no "sequential" needed <- creating an orthogonal of L_hat is 'sequential'
-    //2.2 more balanced operation
-//3. eliminate the need of L_hat
+//    printf("\n");
 }
 
 //void IPM_Mult(byte *P, const byte *Z, const byte *Z_prime, int N, int k, int position)
@@ -574,7 +560,10 @@ byte IPM_Homogenize(const byte *Z, const byte *Z_prime, int N, int k, int positi
     byte res = Z_prime[0];
     // byte epsilon;
     for (i = 1; i < N; i++)
+    {
         res ^= GF256_Mult(L_prime[position][i], Z[i] ^ Z_prime[i]);
+    }
+
     return res;
 }
 
@@ -601,8 +590,11 @@ void mask(byte *Z, byte X, int n, int k)
 {
     int i;
     byte M[n - k]; //n - k random masks
-    randombytes(M, n - k); //Get random masks, as in Equation 7 : M_k+1, ... , M_n
-    randcount += n - k;
+//    randombytes(M, n - k); //Get random masks, as in Equation 7 : M_k+1, ... , M_n
+//    randcount += n - k;
+    M[0] = 65;
+    M[1] = 63;
+    M[2] = 97;
     innerProduct(Z, M, n, k);
     for (i = 0; i < k; i++)
         Z[i] ^= X; //duplicate the data for k times
