@@ -11,13 +11,9 @@
 
 void test()
 {
-    int n = 4,
-            k = 1; //Nb of shares; duplicating parameter
-    byte **L = IPM_FD_Setup(n, k);
-    printf("--------IPM-FD n = %d, k = %d--------\n ", n, k);
-    for (int i = 0; i < k; i++)
-        print(L[i], "", n);
-    printf("----------------------------------\n");
+    int n = 5,
+            k = 2; //Nb of shares; duplicating parameter
+    IPM_FD_Setup(n, k);
 
     //test mask | unmask
     byte X = 33;//random_byte();
@@ -31,16 +27,7 @@ void test()
     X = unmask(Z, n, k);
     printf("Unmasked = %02x\n\n", X);
 
-    printf("Test square:\n");
-    mask(Z, X, n, k);
-    print(Z, "masked data ", n);
-    IPM_FD_Square(Z,Z,n,k);
-    printf("Squared data:");
-    for (int i = 0; i < n-k+1; i++) {
-        printf("%2x", Z[i]);
-    }
-    printf("\n");
-    printf("Expected Squared data: b68c9dc2\n");
+//    printf("Expected Squared data: b68c9dc2\n");
 
     printf("---------------- Test IPM_FD_Mult --------------\n");
     byte Y = X; //random_byte();
@@ -61,6 +48,10 @@ void test()
     u = unmask(T, n, k);
     printf("Unmasked = %d\n\n", u);
 
+    printf("---------------- Test square---------------- \n");
+    mask(Z, X, n, k);
+    IPM_FD_Square(Z,Z,n,k);
+    print(Z, "Squared data ", n);
 
 }
 int main()

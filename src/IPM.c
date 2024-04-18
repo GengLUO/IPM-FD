@@ -48,6 +48,12 @@ byte sq[256] = {
         0x46, 0x47, 0x42, 0x43, 0x56, 0x57, 0x52, 0x53,
         0x06, 0x07, 0x02, 0x03, 0x16, 0x17, 0x12, 0x13};
 
+byte hardrandom[4][4] = {
+        { 43, 65, 63, 97 },
+        { 123, 1, 239, 54 },
+        { 78, 76, 127, 179 },
+        { 222, 48, 74, 59 }
+};
 //IPM settings : constant public valuesTODO:important
 byte **L;       // The orthogonal of n^2 matrix H
 byte **L_prime; // orthogonal of H with the (k - 1) 0s removed (n - k +1)^2
@@ -294,7 +300,11 @@ void IPM_Square(byte *x2, const byte *x, int N, int position)
 //        printf("%2x,",GF256_Square(x[i]));
     }
     x2[0] = GF256_Square(x[0]); //L_prime[position][0] = 1
-    printf("\nEnd square\n");
+
+    printf("Square position = %d\n", position);
+    print(x, "x: ", N);
+    print(x2, "x^2: ", N);
+    printf("\n");
 }
 
 //squaring of IPM_FD share, more efficient than Mult(x,x)
@@ -358,23 +368,11 @@ void IPM_FD_Mult(byte *R, const byte *Z, const byte *Z_prime, int n, int k)
     multcount = 0;
     for (j = 0; j < k; j++)
         IPM_Mult(P[j], Z__[j], Z_prime__[j], N, k, j);
-    printf("multcount = %d\n",multcount);
-    for(int index = 0; index < k; index ++) {
-        printf("P[%d]:\n", index);
-        for (i = 0; i < N; i++) {
-            printf("%2x", P[index][i]);
-        }
-        printf("\n");
-    }
+//    printf("multcount = %d\n",multcount);
+
     for (j = 1; j < k; j++)
         P[j][0] = IPM_Homogenize(P[0], P[j], N, k, j);
-    for(int index = 0; index < k; index ++) {
-        printf("P[%d]:\n", index);
-        for (i = 0; i < N; i++) {
-            printf("%2x", P[index][i]);
-        }
-        printf("\n");
-    }
+
     //return
     for (j = 0; j < k; j++)
         R[j] = P[j][0];
@@ -404,41 +402,12 @@ void IPConstMult(byte *res, const byte *x, byte c, int n)
 void IPM_Mult(byte *P, const byte *Z, const byte *Z_prime, int N, int k, int position)
 {
 //    byte T[N][N], U[N][N], V[N][N], U_prime[N][N];
-    printf("Z:\n");
-    for (int i = 0; i < N; i++) {
-        printf("%2x",Z[i]);
-    }
-    printf("\n");
-    printf("Z':\n");
-    for (int i = 0; i < N; i++) {
-        printf("%2x",Z_prime[i]);
-    }
-    printf("\n");
 
     byte T, U, U_prime;
     byte next;
     byte R[N];
     memset(R,0,N);
-    byte random[4][4];
-    random[0][0] = 43;
-    random[0][1] = 65;
-    random[0][2] = 63;
-    random[0][3] = 97;
 
-    random[1][0] = 123;
-    random[1][1] = 1;
-    random[1][2] = 239;
-    random[1][3] = 54;
-
-    random[2][0] = 78;
-    random[2][1] = 76;
-    random[2][2] = 127;
-    random[2][3] = 179;
-
-    random[3][0] = 222;
-    random[3][1] = 48;
-    random[3][2] = 74;
-    random[3][3] = 59;
     int i, j;
     int index_i, index_j;
 
@@ -456,7 +425,7 @@ void IPM_Mult(byte *P, const byte *Z, const byte *Z_prime, int N, int k, int pos
             }
             else {
                 if (next) {
-                    U_prime = random[i][j];
+                    U_prime = hardrandom[i][j];
 //                    U_prime = random_byte();
                     next = 0;
 
@@ -477,6 +446,12 @@ void IPM_Mult(byte *P, const byte *Z, const byte *Z_prime, int N, int k, int pos
 
     }
     memcpy(P,R,N);
+
+    printf("Mult position = %d\n", position);
+    print(Z, "Z: ", N);
+    print(Z_prime, "Z_prime: ", N);
+    print(P, "P: ",N);
+    printf("\n");
 //    printf("P':\n");
 //    for (int i = 0; i < N; i++) {
 //        printf("%2x",P[i]);
@@ -563,7 +538,11 @@ byte IPM_Homogenize(const byte *Z, const byte *Z_prime, int N, int k, int positi
     {
         res ^= GF256_Mult(L_prime[position][i], Z[i] ^ Z_prime[i]);
     }
-
+    printf("Homo position = %d\n", position);
+    print(Z, "Z: ", N);
+    print(Z_prime, "Z_prime: ", N);
+    printf("Homo_result: %02x",res);
+    printf("\n\n");
     return res;
 }
 
