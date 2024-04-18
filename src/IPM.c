@@ -211,29 +211,24 @@ byte **IPM_FD_Setup(int n, int k)
 
     printf("L:\n");
     for (i = 0; i<k; i++){
-        for (j = 0; j < n; j++){
-            printf("%d,",L[i][j]);
-        }
-        printf("\n");
+        print(L[i], "",n);
     }
     printf("\n");
+
     printf("L':\n");
     for (i = 0; i<k; i++){
-        for (j = 0; j < N; j++){
-            printf("%d,",L_prime[i][j]);
-        }
-        printf("\n");
+        print(L_prime[i], "",N);
     }
     printf("\n");
     printf("L'inv:\n");
     for (i = 0; i<k; i++){
-        for (j = 0; j < N; j++){
-            printf("%d,",L_prime_inv[i][j]);
-        }
-        printf("\n");
+        print(L_prime_inv[i], "",N);
     }
     printf("\n");
-
+    print(hardrandom[0], "hardrandom:", 4);
+    print(hardrandom[1], "hardrandom:", 4);
+    print(hardrandom[2], "hardrandom:", 4);
+    print(hardrandom[3], "hardrandom:", 4);
     return L;
 }
 
@@ -793,7 +788,7 @@ void print(const byte *a, const char *msg, int n)
     printf("%s[", msg);
     for (j = 0; j < n - 1; j++)
     {
-        printf("%02x,", a[j]);
+        printf("%02x", a[j]);
     }
     printf("%02x]\n", a[n - 1]);
 }

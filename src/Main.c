@@ -14,7 +14,6 @@ void test()
     int n = 5,
             k = 2; //Nb of shares; duplicating parameter
     IPM_FD_Setup(n, k);
-
     //test mask | unmask
     byte X = 33;//random_byte();
 
@@ -30,13 +29,13 @@ void test()
 //    printf("Expected Squared data: b68c9dc2\n");
 
     printf("---------------- Test IPM_FD_Mult --------------\n");
-    byte Y = X; //random_byte();
-    printf("Y = %d\n", Y);
+    byte Y = 55; //random_byte();
+    printf("Y = %02x\n", Y);
     byte Q[n];
     mask(Q, Y, n, k);
     print(Q, "(Sharing) masked data Q ", n);
     int u = unmask(Q, n, k);
-    printf("Unmasked = %d\n\n", u);
+    printf("Unmasked = %02x\n\n", u);
 
     /////
     printf("X*Y = %d\n", GF256_Mult(X, Y));
